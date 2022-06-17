@@ -2,13 +2,14 @@ package com.example.blog.Controller;
 
 
 import com.example.blog.model.BlogPost;
+import com.example.blog.repository.UserRepository;
 import com.example.blog.service.BlogPostService;
-import com.example.blog.service.BlogPostServiceImpl;
+import com.example.blog.service.NotificationService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -19,16 +20,22 @@ public class BlogPostController {
 
     @Autowired
     private BlogPostService blogPostService;
-//    @GetMapping("/")
-//    public String home(Model model) {
-//        List<BlogPost> latest5Posts = blogPostService.findLatest5();
-//        model.addAttribute( "latest5posts", latest5Posts);
-//
-//        List<BlogPost> latest3Posts = latest5Posts.stream()
-//                .limit(3).collect(Collectors.toList());
-//        model.addAttribute("latest3posts",latest3Posts);
-//        return "home";
-//    }
+
+    @Autowired
+    private NotificationService notifyService;
+
+    @Autowired
+    private UserRepository userRepository;
+    @GetMapping("/")
+    public String home(Model model) {
+        List<BlogPost> latest5Posts = blogPostService.findLatest5();
+        model.addAttribute( "latest5posts", latest5Posts);
+
+        List<BlogPost> latest3Posts = latest5Posts.stream()
+                .limit(3).collect(Collectors.toList());
+        model.addAttribute("latest3posts",latest3Posts);
+        return "home";
+    }
 
 
     @GetMapping("/logout")
@@ -38,7 +45,88 @@ public class BlogPostController {
 
     @GetMapping("/login")
     public String login() {
-        return "login";
+
+        return "users/login";
     }
+
+    @RequestMapping("users/login")
+    public String userlogin() {
+
+        return "redirect:/posts/User";
+    }
+
+
+    @RequestMapping("/posts/User/{id}")
+    public String User(@PathVariable("id") Long id, Model model) {
+        BlogPost post = blogPostService.findById(id);
+        if (post == null) {
+            notifyService.addErrorMessage("Cannot find post #" + id);
+            return "redirect:/";
+        }
+        model.addAttribute("post", post);
+        return "posts/User";
+    }
+
+    @RequestMapping("/posts/User")
+    public String User(Model model) {
+        List<BlogPost> latest5Posts = blogPostService.findLatest5();
+        model.addAttribute( "latest5posts", latest5Posts);
+
+        List<BlogPost> latestfivePosts = latest5Posts.stream().collect(Collectors.toList());
+        model.addAttribute("latestfiveposts", latestfivePosts);
+
+        return "/posts/User";
+    }
+
+
+    @RequestMapping("deletepost/{id}")
+    public String saveDelete(@PathVariable("id") Long id, Model model) {
+        BlogPost blogPost = blogPostService.findById(id);
+        model.addAttribute("blogPost", blogPost);
+        return "/deletepost";
+
+    }
+
+
+
+    @GetMapping("/deleteById/{id}")
+    public String deleteById(@PathVariable (value = "id") Long id) {
+        blogPostService.deleteById(id);
+        return "redirect:/posts/User";
+    }
+
+
+    @GetMapping("/editpost/{id}")
+    public String editblogpost(@PathVariable(value = "id") long id, Model model) {
+
+        BlogPost blogPost = blogPostService.findById(id);
+        model.addAttribute("blogPost", blogPost);
+        return "editpost";
+    }
+    @PostMapping("/editpost")
+    public String edit(@ModelAttribute("BlogPost") BlogPost blogPost) {
+
+        blogPostService.edit(blogPost);
+
+        return "redirect:/posts/User";
+    }
+
+    @GetMapping("posts/showNewPostForm")
+    public String showNewPostForm(Model model) {
+        BlogPost blogPost = new BlogPost();
+
+        model.addAttribute("blogPost", blogPost);
+        return "new_post";
+    }
+
+    @PostMapping("/create")
+    public String createPost(@ModelAttribute("blogPost") BlogPost blogPost) {
+        String name = SecurityContextHolder.getContext().getAuthentication().getName();
+        blogPost.setUser(userRepository.findByUsername(name));
+        blogPostService.create(blogPost);
+        return "redirect:/posts/User";
+    }
+
+
 
 }
