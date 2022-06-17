@@ -60,7 +60,7 @@ public class BlogPostServiceJpaImp implements BlogPostService {
     @Override
     public BlogPost edit(BlogPost post) {
 
-        return this.postRepo.save(post);
+        return postRepo.save(post);
     }
 
     @Override

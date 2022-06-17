@@ -2,9 +2,11 @@ package com.example.blog.Controller;
 
 
 import com.example.blog.model.BlogPost;
+import com.example.blog.repository.UserRepository;
 import com.example.blog.service.BlogPostService;
 import com.example.blog.service.NotificationService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -21,6 +23,9 @@ public class BlogPostController {
 
     @Autowired
     private NotificationService notifyService;
+
+    @Autowired
+    private UserRepository userRepository;
     @GetMapping("/")
     public String home(Model model) {
         List<BlogPost> latest5Posts = blogPostService.findLatest5();
@@ -67,56 +72,71 @@ public class BlogPostController {
         List<BlogPost> latest5Posts = blogPostService.findLatest5();
         model.addAttribute( "latest5posts", latest5Posts);
 
-        List<BlogPost> latestfivePosts = latest5Posts.stream()
-                .limit(5).collect(Collectors.toList());
+        List<BlogPost> latestfivePosts = latest5Posts.stream().collect(Collectors.toList());
         model.addAttribute("latestfiveposts", latestfivePosts);
 
         return "/posts/User";
     }
 
-//    @GetMapping("deletepost/{id}/confirm")
-//    public String delete(@PathVariable (value = "id") long id) {
-//        //this.blogPostService.deleteById(id);
+//    @GetMapping("/deletepost/{id}")
+//    public String delete(@PathVariable("id") Long id, Model model){
+//        BlogPost blogPost = blogPostService.findById(id);
+//        model.addAttribute("blogPost", blogPost);
 //        return "redirect:/posts/User";
 //    }
 //
-//    @GetMapping("/deletepost/{id}")
-//        public String delete(@PathVariable("id") Long id, Model model){
-//        BlogPost blogPost = blogPostService.findById(id);
-//        model.addAttribute("blogPost", blogPost);
-//        return "/deletepost";
-//    }
-
-
-
+//
+//
     @RequestMapping("deletepost/{id}")
-        public String saveDelete(@PathVariable("id") Long id, Model model) {
-     BlogPost blogPost = blogPostService.findById(id);
-     model.addAttribute("blogPost", blogPost);
-     return "redirect:/posts/User";
+    public String saveDelete(@PathVariable("id") Long id, Model model) {
+        BlogPost blogPost = blogPostService.findById(id);
+        model.addAttribute("blogPost", blogPost);
+        return "/deletepost";
 
+    }
+
+//@GetMapping("/deletepost/{id}")
+//public String deleteById(@PathVariable (value = "id") Long id) {
+//    blogPostService.deleteById(id);
+//    return "redirect:/posts/User";
+//}
+
+    @GetMapping("/deleteById/{id}")
+    public String deleteById(@PathVariable (value = "id") Long id) {
+        blogPostService.deleteById(id);
+        return "redirect:/posts/User";
     }
 
 
     @GetMapping("/editpost/{id}")
     public String editblogpost(@PathVariable(value = "id") long id, Model model) {
-        // create model attribute to bind form data
+
         BlogPost blogPost = blogPostService.findById(id);
         model.addAttribute("blogPost", blogPost);
         return "editpost";
     }
     @PostMapping("/editpost")
-    public String edit(@ModelAttribute("BlogPost") BlogPost post) {
-        // save employee to database
-        blogPostService.edit(post);
-        return "redirect:/posts/user";
+    public String edit(@ModelAttribute("BlogPost") BlogPost blogPost) {
+
+        blogPostService.edit(blogPost);
+
+        return "redirect:/posts/User";
     }
 
     @GetMapping("posts/showNewPostForm")
     public String showNewPostForm(Model model) {
         BlogPost blogPost = new BlogPost();
+
         model.addAttribute("blogPost", blogPost);
         return "new_post";
+    }
+
+    @PostMapping("/create")
+    public String createPost(@ModelAttribute("blogPost") BlogPost blogPost) {
+        String name = SecurityContextHolder.getContext().getAuthentication().getName();
+        blogPost.setUser(userRepository.findByUsername(name));
+        blogPostService.create(blogPost);
+        return "redirect:/posts/User";
     }
 
 

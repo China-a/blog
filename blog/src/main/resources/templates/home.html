@@ -48,7 +48,7 @@ xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity3">
 <div class="card rounded-4  d-grid gap-3 mx-auto" style="width: 75%">
 
     <div th:each="p : ${latest3posts}">
-    <div class="card-body rounded-4 border border-dark" >
+    <div class="card-body rounded-4 border border-dark"  id="card">
         <div class="card-header bg-transparent border-dark" th:if="${p.user}" >
             <span th:text="${p.user.fullName != null ?
                         p.user.fullName : p.user.username}">User</span>

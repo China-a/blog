@@ -22,7 +22,18 @@ h1{
 
 }
 
-/*.formError {*/
-/*    color: red;*/
-/*    font-style: italic;*/
-/*}*/
+.container{
+    background-color: linear-gradient(to-right, #3A1027, orange);
+}
+
+/* #card:nth-child(even) {
+    background-color: linear-gradient(black, silver)
+}
+#card:nth-child(odd) {
+    background-color: #D91A5F ;
+} */
+
+#card:hover {
+    background-color: #D91A5F;
+    transition: background-color 1s;
+}
